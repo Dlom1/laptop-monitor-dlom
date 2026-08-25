@@ -235,7 +235,7 @@ function renderPrivate(p){
         <button class="primary" onclick="sendRemoteMessage()">Buat & Kirim Perintah</button>
       </div>
       <div class="controlBox"><h4>📷 Minta Verifikasi Kamera</h4>
-        <p class="small muted">Laptop akan menampilkan pemberitahuan yang jelas. Kamera tidak aktif diam-diam. Orang di depan laptop harus memilih <b>Mulai verifikasi</b>, Windows Camera akan terlihat, lalu tombol FOTO ditekan. Foto dienkripsi sebelum dikirim.</p>
+        <p class="small muted">Laptop akan menampilkan pemberitahuan yang jelas. Kamera tidak aktif diam-diam. Orang di depan laptop harus memilih <b>Mulai Verifikasi Kamera</b> pada halaman yang terbuka. Kamera dan indikator tetap terlihat normal. Hanya satu foto diambil lalu dienkripsi sebelum dikirim.</p>
         <button class="primary" onclick="requestCamera()">Minta Verifikasi Kamera</button>
         <div style="height:8px"></div><button onclick="showLatestPhoto()">Lihat Foto Verifikasi Terakhir</button>
         <div id="cameraPhoto" class="cameraPhoto small muted">${cam&&cam.captured_utc?'Terakhir: '+esc(fmtDate(cam.captured_utc)):'Belum ada foto verifikasi.'}</div>
@@ -301,13 +301,19 @@ async function sendRemoteMessage(){const m=$('remoteMessage')?.value?.trim();if(
 async function requestCamera(){if(!confirm('Kirim permintaan verifikasi kamera? Laptop akan menampilkan pemberitahuan dan memerlukan tindakan orang di depan laptop.'))return;await issueControl('camera_verify',{})}
 async function showLatestPhoto(){
   if(!sessionPassword||!privatePayload){openModal();return}
-  const cam=privatePayload.camera||{};const box=$('cameraPhoto');if(!cam.path){if(box)box.textContent='Belum ada foto verifikasi.';return}
+  const box=$('cameraPhoto');
   try{
-    if(box)box.textContent='Mengambil dan mendekripsi foto...';const cfg=repoCfg();
-    const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/main/${cam.path}?t=${Date.now()}`;
-    const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(`Foto terenkripsi belum tersedia (HTTP ${r.status}).`);
-    const env=await r.json(),photo=await decryptEnvelope(env,sessionPassword);if(!photo.image_b64)throw new Error('Data foto tidak valid.');
-    if(box)box.innerHTML=`<div class="small muted" style="margin-bottom:8px">Diambil: ${esc(fmtDate(photo.captured_utc))}</div><img alt="Foto verifikasi kamera" src="data:${esc(photo.mime||'image/jpeg')};base64,${photo.image_b64}">`;
+    if(box)box.textContent='Mengambil dan mendekripsi foto...';
+    const cfg=repoCfg();
+    const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/main/private/camera_latest.json?t=${Date.now()}`;
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok){
+      if(r.status===404)throw new Error('Belum ada foto verifikasi kamera.');
+      throw new Error(`Foto terenkripsi belum tersedia (HTTP ${r.status}).`);
+    }
+    const env=await r.json(),photo=await decryptEnvelope(env,sessionPassword);
+    if(!photo.image_b64)throw new Error('Data foto tidak valid.');
+    if(box)box.innerHTML=`<div class="small muted" style="margin-bottom:8px">Diambil: ${esc(fmtDate(photo.captured_utc))} • Verifikasi terlihat di laptop</div><img alt="Foto verifikasi kamera" src="data:${esc(photo.mime||'image/jpeg')};base64,${photo.image_b64}">`;
   }catch(e){if(box)box.textContent=e.message||String(e)}
 }
 
