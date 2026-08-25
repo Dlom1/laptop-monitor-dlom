@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1220">
-<title>Laptop Monitor Dlom PRO v2</title>
+<title>Laptop Monitor Dlom PRO v3 Remote Control</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -39,10 +39,11 @@ button.primary{background:var(--accent);border-color:var(--accent);color:white}
 table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--muted);font-weight:750}
 .note{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);font-size:12px;color:var(--muted);line-height:1.5}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.58);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.modal.show{display:flex}.modalBox{width:min(440px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}.modalBox h3{margin:0 0 5px}.modalBox p{margin:0 0 13px;color:var(--muted);font-size:12px;line-height:1.5}
-input{width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:11px 12px;border-radius:11px;font-size:15px;outline:none}.modalBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+input,textarea,select{width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:11px 12px;border-radius:11px;font-size:15px;outline:none}.modalBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 .offlineStale{display:none;margin-top:12px;border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));background:color-mix(in srgb,var(--warn) 8%,var(--card));border-radius:13px;padding:11px;font-size:12px;color:var(--muted)}.offlineStale.show{display:block}
+.controlGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.controlBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}.controlBox h4{margin:0 0 8px}.controlBox textarea{min-height:120px;resize:vertical}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.checkrow{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:9px 0}.checkrow input{width:auto}.cameraPhoto{margin-top:12px}.cameraPhoto img{max-width:100%;border-radius:15px;border:1px solid var(--line)}
 .footer{font-size:11px;color:var(--muted);text-align:center;padding:15px 4px 4px}
-@media(max-width:760px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.apps{grid-template-columns:1fr}}
+@media(max-width:760px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.apps{grid-template-columns:1fr}.controlGrid{grid-template-columns:1fr}}
 @media(max-width:520px){.shell{padding:12px}.topbar{align-items:flex-start}.brand h1{font-size:18px}.actions{justify-content:flex-end}.state{font-size:27px}.quick{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.item.span2,.item.full{grid-column:auto}.section{padding:13px}.hero{padding:15px}}
 </style>
 </head>
@@ -50,8 +51,8 @@ input{width:100%;border:1px solid var(--line);background:var(--panel);color:var(
 <div class="shell">
   <div class="topbar">
     <div class="brand">
-      <h1>Monitor Laptop Dlom PRO v2</h1>
-      <p>Heartbeat publik + telemetri privat terenkripsi</p>
+      <h1>Laptop Monitor Dlom PRO v3</h1>
+      <p>Heartbeat + detail privat terenkripsi + Remote Control</p>
     </div>
     <div class="actions">
       <span id="lockChip" class="lockchip">🔒 Detail privat terkunci</span>
@@ -78,6 +79,7 @@ input{width:100%;border:1px solid var(--line);background:var(--panel);color:var(
 
   <div class="tabs">
     <button class="tab active" data-view="overview">Overview</button>
+    <button class="tab" data-view="control">CONTROL</button>
     <button class="tab" data-view="system">System</button>
     <button class="tab" data-view="network">Network</button>
     <button class="tab" data-view="apps">Apps</button>
@@ -98,19 +100,20 @@ input{width:100%;border:1px solid var(--line);background:var(--panel);color:var(
     </div>
   </section>
 
+  <section id="control" class="card section view privateView"></section>
   <section id="system" class="card section view privateView"></section>
   <section id="network" class="card section view privateView"></section>
   <section id="apps" class="card section view privateView"></section>
   <section id="location" class="card section view privateView"></section>
   <section id="history" class="card section view privateView"></section>
 
-  <div class="footer">Status ONLINE jika heartbeat publik ≤ 3 menit. Detail privat didekripsi di browser dan password tidak dikirim ke GitHub.</div>
+  <div class="footer">Status ONLINE jika heartbeat publik ≤ 3 menit. Perintah CONTROL dienkripsi di browser; kamera selalu meminta verifikasi secara terlihat di laptop.</div>
 </div>
 
 <div id="modal" class="modal">
   <div class="modalBox">
     <h3>Buka detail privat</h3>
-    <p>Masukkan password dashboard yang dibuat saat instalasi PRO v2. Password hanya digunakan di browser untuk mendekripsi data.</p>
+    <p>Masukkan password dashboard yang dibuat saat instalasi PRO. Password yang sama dipakai untuk detail privat dan mengenkripsi perintah CONTROL. Password hanya digunakan di browser untuk mendekripsi data.</p>
     <input id="password" type="password" autocomplete="current-password" placeholder="Password dashboard">
     <div id="modalError" class="small danger" style="margin-top:8px"></div>
     <div class="modalBtns"><button id="cancelBtn">Batal</button><button id="decryptBtn" class="primary">Buka</button></div>
@@ -122,6 +125,7 @@ const OFFLINE_AFTER_MS=3*60*1000;
 const REFRESH_MS=90*1000;
 const PUB_LABEL='laptop-monitor-status';
 const PRIV_LABEL='laptop-monitor-private';
+const CONTROL_LABEL='laptop-monitor-control';
 let issuesCache=null, privatePayload=null, sessionPassword='';
 
 const $=id=>document.getElementById(id);
@@ -157,15 +161,22 @@ function lockedHtml(title){
   return `<div class="locked"><div class="icon">🔒</div><h3>${esc(title)}</h3><p>Bagian ini berisi data privat yang tersimpan terenkripsi di GitHub. Buka detail dengan password dashboard.</p><button class="primary" onclick="openModal()">Buka detail privat</button></div>`;
 }
 function renderLocked(){
-  $('system').innerHTML=lockedHtml('System terkunci');$('network').innerHTML=lockedHtml('Network terkunci');$('apps').innerHTML=lockedHtml('Apps terkunci');$('location').innerHTML=lockedHtml('Location terkunci');$('history').innerHTML=lockedHtml('History terkunci');
+  $('control').innerHTML=lockedHtml('Remote Control terkunci');$('system').innerHTML=lockedHtml('System terkunci');$('network').innerHTML=lockedHtml('Network terkunci');$('apps').innerHTML=lockedHtml('Apps terkunci');$('location').innerHTML=lockedHtml('Location terkunci');$('history').innerHTML=lockedHtml('History terkunci');
 }
 
 function renderPrivate(p){
   privatePayload=p;
   $('lockChip').textContent='🔓 Detail privat terbuka';$('unlockBtn').textContent='Kunci detail';
-  const d=p.device||{},s=p.status||{},b=p.battery||{},c=p.cpu||{},m=p.memory||{},n=p.network||{},l=p.location||{};
+  const d=p.device||{},s=p.status||{},b=p.battery||{},c=p.cpu||{},m=p.memory||{},n=p.network||{},l=p.location||{},u=p.current_user||{},cam=p.camera||{};
   $('system').innerHTML=`
-    <h3 class="sectionTitle">System</h3><div class="grid">
+    <h3 class="sectionTitle">Pengguna Saat Ini</h3><div class="grid">
+    <div class="item"><div class="label">Windows User</div><div class="value">${esc(u.windows_user||u.username||'-')}</div></div>
+    <div class="item"><div class="label">Aktif sejak</div><div class="value">${esc(fmtDate(u.active_since_utc))}</div></div>
+    <div class="item"><div class="label">Status session</div><div class="value">${u.locked?'Terkunci':'Aktif / Unlock'}</div></div>
+    <div class="item"><div class="label">Idle</div><div class="value">${esc(u.idle_human||s.idle_human)}</div></div>
+    <div class="item span2"><div class="label">Aplikasi foreground</div><div class="value">${esc(u.foreground_app||s.active_app||'Tidak terdeteksi')}</div></div>
+    </div>
+    <h3 class="sectionTitle" style="margin-top:18px">System</h3><div class="grid">
     <div class="item"><div class="label">Hostname</div><div class="value">${esc(d.hostname)}</div></div>
     <div class="item"><div class="label">Model</div><div class="value">${esc(d.manufacturer)} ${esc(d.model)}</div></div>
     <div class="item"><div class="label">Windows</div><div class="value">${esc(d.windows_caption)}</div></div>
@@ -212,6 +223,31 @@ function renderPrivate(p){
     <div class="item"><div class="label">ISP</div><div class="value">${esc(l.isp)}</div></div>
     </div><div class="note" style="margin-top:12px">Lokasi berasal dari IP publik dan hanya perkiraan kota/wilayah. Ini bukan pelacakan GPS presisi.</div>`;
 
+  const ch=p.control_history||[];
+  $('control').innerHTML=`
+    <h3 class="sectionTitle">REMOTE CONTROL</h3>
+    <div class="note" style="margin-bottom:12px">Perintah dibuat terenkripsi dengan password privat. Setelah menekan tombol kirim, GitHub akan terbuka dengan Issue yang sudah terisi; Anda hanya perlu menekan <b>Submit new issue</b>. Laptop memeriksa perintah sekitar setiap 12 detik.</div>
+    <div class="controlGrid">
+      <div class="controlBox"><h4>🖥️ Kirim Pesan ke Laptop</h4>
+        <textarea id="remoteMessage" maxlength="700" placeholder="Contoh: LAPTOP INI MILIK DLOM. HUBUNGI PEMILIK."></textarea>
+        <div class="row" style="margin-top:9px"><div><div class="small muted">Durasi</div><select id="messageDuration"><option value="30">30 detik</option><option value="60" selected>1 menit</option><option value="120">2 menit</option><option value="300">5 menit</option><option value="600">10 menit</option></select></div></div>
+        <label class="checkrow"><input id="messageSound" type="checkbox" checked> Bunyi pemberitahuan</label>
+        <button class="primary" onclick="sendRemoteMessage()">Buat & Kirim Perintah</button>
+      </div>
+      <div class="controlBox"><h4>📷 Minta Verifikasi Kamera</h4>
+        <p class="small muted">Laptop akan menampilkan pemberitahuan yang jelas. Kamera tidak aktif diam-diam. Orang di depan laptop harus memilih <b>Mulai verifikasi</b>, Windows Camera akan terlihat, lalu tombol FOTO ditekan. Foto dienkripsi sebelum dikirim.</p>
+        <button class="primary" onclick="requestCamera()">Minta Verifikasi Kamera</button>
+        <div style="height:8px"></div><button onclick="showLatestPhoto()">Lihat Foto Verifikasi Terakhir</button>
+        <div id="cameraPhoto" class="cameraPhoto small muted">${cam&&cam.captured_utc?'Terakhir: '+esc(fmtDate(cam.captured_utc)):'Belum ada foto verifikasi.'}</div>
+      </div>
+    </div>
+    <div id="controlStatus" class="note" style="margin-top:12px">Perintah memiliki ID unik, masa berlaku 5 menit, dan tidak dapat dijalankan ulang.</div>
+    <h3 class="sectionTitle" style="margin-top:18px">Control History</h3>
+    <div style="overflow:auto"><table><thead><tr><th>Waktu</th><th>Perintah</th><th>Hasil</th><th>Keterangan</th></tr></thead><tbody>
+    ${ch.slice().reverse().map(x=>`<tr><td>${esc(fmtDate(x.t))}</td><td>${esc(x.type)}</td><td>${esc(x.result)}</td><td>${esc(x.detail)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Belum ada riwayat kontrol.</td></tr>'}
+    </tbody></table></div>
+    <div style="margin-top:12px"><button onclick="lockPrivate()">🔒 Kunci Detail Privat</button></div>`;
+
   const hist=p.history||[], events=p.events||[];
   $('history').innerHTML=`
     <h3 class="sectionTitle">History</h3>
@@ -234,6 +270,47 @@ async function decryptEnvelope(env,password){
   const plain=await crypto.subtle.decrypt({name:'AES-CBC',iv},akey,ct);
   return JSON.parse(new TextDecoder().decode(plain));
 }
+function b64enc(bytes){let s='';const step=0x8000;for(let i=0;i<bytes.length;i+=step)s+=String.fromCharCode(...bytes.subarray(i,i+step));return btoa(s)}
+async function encryptEnvelope(obj,password,iter=120000,kind='control'){
+  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(16));
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
+  const bits=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt,iterations:iter},base,512));
+  const encKey=bits.slice(0,32),macKey=bits.slice(32,64),plain=new TextEncoder().encode(JSON.stringify(obj));
+  const akey=await crypto.subtle.importKey('raw',encKey,{name:'AES-CBC'},false,['encrypt']);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-CBC',iv},akey,plain));
+  const hkey=await crypto.subtle.importKey('raw',macKey,{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const mac=new Uint8Array(await crypto.subtle.sign('HMAC',hkey,concat(salt,iv,ct)));
+  return {v:3,kind,alg:'AES-256-CBC+HMAC-SHA256',kdf:'PBKDF2-SHA256',iter,salt:b64enc(salt),iv:b64enc(iv),ct:b64enc(ct),mac:b64enc(mac)};
+}
+function newId(){return crypto.randomUUID?crypto.randomUUID():`${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`}
+async function issueControl(type,payload){
+  if(!sessionPassword){openModal();return}
+  const cfg=repoCfg();if(!cfg){alert('Dashboard harus dibuka melalui GitHub Pages.');return}
+  const w=window.open('about:blank','_blank');
+  const now=new Date(),exp=new Date(now.getTime()+5*60*1000),id=newId();
+  const cmd={schema_version:3,id,type,created_utc:now.toISOString(),expires_utc:exp.toISOString(),payload};
+  const env=await encryptEnvelope(cmd,sessionPassword,120000,'control');
+  const friendly=type==='remote_message'?'REMOTE MESSAGE':'CAMERA VERIFY';
+  const title=`[CONTROL] ${friendly} ${id.slice(0,8)}`;
+  const url=`https://github.com/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(JSON.stringify(env))}&labels=${encodeURIComponent(CONTROL_LABEL)}`;
+  const st=$('controlStatus');
+  if(w){w.location.href=url;if(st)st.innerHTML=`Perintah <b>${esc(id.slice(0,8))}</b> sudah dienkripsi. Di halaman GitHub yang terbuka, tekan <b>Submit new issue</b>. Masa berlaku: 5 menit.`}
+  else if(st){st.innerHTML=`Popup diblokir. <a href="${url}" target="_blank" rel="noopener">Tekan di sini untuk membuka GitHub</a>, lalu tekan <b>Submit new issue</b>.`}
+}
+async function sendRemoteMessage(){const m=$('remoteMessage')?.value?.trim();if(!m){alert('Isi pesan terlebih dahulu.');return}const d=parseInt($('messageDuration').value||'60',10);await issueControl('remote_message',{message:m,duration_sec:d,sound:!!$('messageSound').checked})}
+async function requestCamera(){if(!confirm('Kirim permintaan verifikasi kamera? Laptop akan menampilkan pemberitahuan dan memerlukan tindakan orang di depan laptop.'))return;await issueControl('camera_verify',{})}
+async function showLatestPhoto(){
+  if(!sessionPassword||!privatePayload){openModal();return}
+  const cam=privatePayload.camera||{};const box=$('cameraPhoto');if(!cam.path){if(box)box.textContent='Belum ada foto verifikasi.';return}
+  try{
+    if(box)box.textContent='Mengambil dan mendekripsi foto...';const cfg=repoCfg();
+    const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/main/${cam.path}?t=${Date.now()}`;
+    const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(`Foto terenkripsi belum tersedia (HTTP ${r.status}).`);
+    const env=await r.json(),photo=await decryptEnvelope(env,sessionPassword);if(!photo.image_b64)throw new Error('Data foto tidak valid.');
+    if(box)box.innerHTML=`<div class="small muted" style="margin-bottom:8px">Diambil: ${esc(fmtDate(photo.captured_utc))}</div><img alt="Foto verifikasi kamera" src="data:${esc(photo.mime||'image/jpeg')};base64,${photo.image_b64}">`;
+  }catch(e){if(box)box.textContent=e.message||String(e)}
+}
+
 async function unlock(password){
   const issue=getIssue(PRIV_LABEL);if(!issue)throw new Error('Issue telemetri privat belum tersedia. Jalankan SETUP_PRO.bat di laptop.');
   const env=JSON.parse(issue.body||'{}');const payload=await decryptEnvelope(env,password);sessionPassword=password;renderPrivate(payload);
