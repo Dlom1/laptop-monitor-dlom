@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Laptop Monitor Dlom</title>
+  <style>
+    :root{
+      color-scheme:light dark;
+      --bg:#f4f6f8;--card:#fff;--text:#111827;--muted:#667085;
+      --line:#e5e7eb;--good:#138a4a;--bad:#c53030;--warn:#a16207;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{--bg:#0b0f14;--card:#111827;--text:#f9fafb;--muted:#9ca3af;--line:#263244;}
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:760px;margin:auto;padding:18px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 18px}
+    .brand{font-weight:800;letter-spacing:.2px}.sub{font-size:12px;color:var(--muted)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.04)}
+    .hero{display:flex;align-items:center;gap:14px}.dot{width:18px;height:18px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 6px rgba(161,98,7,.12)}
+    .dot.online{background:var(--good);box-shadow:0 0 0 6px rgba(19,138,74,.12)}
+    .dot.offline{background:var(--bad);box-shadow:0 0 0 6px rgba(197,48,48,.12)}
+    h1{font-size:27px;margin:0}.status{font-size:14px;color:var(--muted);margin-top:4px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+    .item{border:1px solid var(--line);border-radius:14px;padding:13px}.label{font-size:12px;color:var(--muted);margin-bottom:5px}.value{font-weight:700;overflow-wrap:anywhere}
+    .full{grid-column:1/-1}.foot{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 4px;line-height:1.5}
+    button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}
+    @media(max-width:540px){.grid{grid-template-columns:1fr} .full{grid-column:auto} h1{font-size:24px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div><div class="brand">Laptop Monitor Dlom</div><div class="sub">GitHub Pages + GitHub Issues heartbeat</div></div>
+      <button id="refreshBtn" type="button">Muat ulang</button>
+    </div>
+
+    <section class="card">
+      <div class="hero">
+        <div id="dot" class="dot"></div>
+        <div>
+          <h1 id="state">MEMERIKSA...</h1>
+          <div id="stateDetail" class="status">Mengambil status terakhir laptop.</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="item"><div class="label">Perangkat</div><div id="device" class="value">-</div></div>
+        <div class="item"><div class="label">Terakhir terlihat</div><div id="lastSeen" class="value">-</div></div>
+        <div class="item"><div class="label">Baterai</div><div id="battery" class="value">-</div></div>
+        <div class="item"><div class="label">Daya</div><div id="power" class="value">-</div></div>
+        <div class="item"><div class="label">Internet / Wi‑Fi</div><div id="wifi" class="value">-</div></div>
+        <div class="item"><div class="label">Uptime</div><div id="uptime" class="value">-</div></div>
+        <div class="item"><div class="label">RAM terpakai</div><div id="ram" class="value">-</div></div>
+        <div class="item"><div class="label">Sisa SSD C:</div><div id="disk" class="value">-</div></div>
+        <div class="item full"><div class="label">Keterangan</div><div id="note" class="value">Offline dapat berarti laptop mati, sleep, atau tidak tersambung internet.</div></div>
+      </div>
+    </section>
+    <div class="foot">Halaman memperbarui data setiap 90 detik. Status ONLINE jika heartbeat terakhir ≤ 3 menit.</div>
+  </main>
+
+<script>
+const OFFLINE_AFTER_MS = 3 * 60 * 1000;
+const REFRESH_MS = 90 * 1000;
+const STATUS_LABEL = 'laptop-monitor-status';
+
+function repoFromPagesUrl(){
+  const host = location.hostname.toLowerCase();
+  if(!host.endsWith('.github.io')) return null;
+  const owner = host.split('.')[0];
+  const firstPath = location.pathname.split('/').filter(Boolean)[0];
+  const repo = firstPath || `${owner}.github.io`;
+  return {owner, repo};
+}
+
+function setText(id, value){ document.getElementById(id).textContent = value ?? '-'; }
+function fmtNumber(v, suffix=''){ return (v === null || v === undefined || v === '') ? '-' : `${v}${suffix}`; }
+function fmtDate(iso){
+  if(!iso) return '-';
+  const d = new Date(iso);
+  if(Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('id-ID', {dateStyle:'medium', timeStyle:'medium'});
+}
+
+async function getStatusIssue(){
+  const cfg = repoFromPagesUrl();
+  if(!cfg) throw new Error('Halaman harus dibuka melalui GitHub Pages agar repo dapat dideteksi otomatis.');
+  const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/issues?state=open&labels=${encodeURIComponent(STATUS_LABEL)}&per_page=1&t=${Date.now()}`;
+  const res = await fetch(url, {headers:{'Accept':'application/vnd.github+json'}, cache:'no-store'});
+  if(!res.ok) throw new Error(`GitHub API: HTTP ${res.status}`);
+  const issues = await res.json();
+  if(!issues.length) throw new Error('Issue status belum ditemukan. Jalankan SETUP.bat di laptop terlebih dahulu.');
+  return JSON.parse(issues[0].body || '{}');
+}
+
+function render(data){
+  const last = new Date(data.last_seen_utc || '');
+  const age = Date.now() - last.getTime();
+  const online = Number.isFinite(age) && age >= -60000 && age <= OFFLINE_AFTER_MS;
+  const dot = document.getElementById('dot');
+  dot.className = `dot ${online ? 'online' : 'offline'}`;
+  setText('state', online ? 'ONLINE' : 'OFFLINE');
+  setText('stateDetail', online ? 'Laptop aktif dan heartbeat masih diterima.' : 'Heartbeat laptop sudah melewati batas 3 menit.');
+  setText('device', data.device_label || 'Laptop Utama');
+  setText('lastSeen', fmtDate(data.last_seen_utc));
+  setText('battery', data.battery_percent == null ? 'Tidak tersedia' : `${data.battery_percent}%`);
+  setText('power', data.power_state || '-');
+  setText('wifi', data.wifi_state || 'Tidak terdeteksi');
+  setText('uptime', data.uptime_human || '-');
+  setText('ram', data.ram_used_percent == null ? '-' : `${data.ram_used_percent}%`);
+  setText('disk', data.disk_free_gb == null ? '-' : `${data.disk_free_gb} GB`);
+}
+
+function renderError(err){
+  document.getElementById('dot').className='dot offline';
+  setText('state','BELUM TERHUBUNG');
+  setText('stateDetail', err.message || String(err));
+}
+
+async function refresh(){
+  document.getElementById('refreshBtn').disabled = true;
+  try { render(await getStatusIssue()); }
+  catch(e){ renderError(e); }
+  finally { document.getElementById('refreshBtn').disabled = false; }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', refresh);
+refresh();
+setInterval(refresh, REFRESH_MS);
+</script>
+</body>
+</html>
